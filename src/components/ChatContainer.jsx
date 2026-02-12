@@ -6,6 +6,8 @@ import { IconButton, Menu,MenuItem, Popover } from '@mui/material';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
+import { openDialog } from '../Store/dialogStore';
+import ReactionDialog from './Dialogs/ReactionDialog';
 
 export default function ChatContainer() {
     const selectedRoom=useSelector((state)=>state.room.selectedRoom);
@@ -64,6 +66,13 @@ export default function ChatContainer() {
       const day = date.toLocaleDateString('en-IN', { weekday: 'short' });
       return `${time} • ${day}`;
     };
+
+    const handleOpenReactionDialog=(data)=>{
+      dispatch(openDialog({
+        component:<ReactionDialog chats={data}/>
+      }))
+    }
+
     useEffect(()=>{
         if(selectedRoom?.id){
             dispatch(fetchRoomMembers(selectedRoom?.id));
@@ -156,6 +165,25 @@ export default function ChatContainer() {
                                 </div>
 
                               </div>
+                              {
+                                chat?.reaction &&chat?.reaction?.length > 0 && (
+                                  <div className={`flex gap-1 mt-1 ${chat?.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+                                    {chat?.reaction.map((r)=>(
+                                      <div
+                                      key={r.emoji}
+                                      onClick={() => handleOpenReactionDialog(chat)}
+                                      className={`flex items-center gap-1 px-2 py-[2px] 
+                                                 bg-gray-100 rounded-full text-xs cursor-pointer 
+                                                 border hover:bg-gray-200 `}
+                                    >
+                                      <span>{r.emoji}</span>
+                                      <span>{r.count}</span>
+                                    </div>
+                                    ))}
+                                  </div>
+                                )
+                              }
+
                               <div className={`mb-1 text-xs text-gray-500 ${chat?.user_id === user?.id ? 'text-right' : 'text-left'}`}>
                                   <span className="font-semibold">{chat?.user?.name}</span>
                                   <span className="ml-1">{formatTime(chat?.created_at)}</span>
