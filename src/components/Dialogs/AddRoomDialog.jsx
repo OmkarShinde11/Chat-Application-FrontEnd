@@ -9,15 +9,27 @@ import React, { useEffect, useState } from 'react'
 import Button from '../commomComponents/Button'
 import { useDispatch, useSelector } from 'react-redux'
 import { closeDialog } from '../../Store/dialogStore'
+import { AiFillWechat } from "react-icons/ai";
+
 import { createNewRoomWithMembers } from '../../Store/roomStore';
 
 export default function AddRoomDialog({users}) {
   const {user,allUsers}=useSelector((state)=>state.auth);
+  const {rooms}=useSelector((state)=>state.room);
   const [members,setMembers]=useState([]);
   const [roomName,setRoomName]=useState('');
   const [activetab,setActiveTab]=useState('room');
   const [singleUser,setSingleUser]=useState('');
+  const [checkAi,setCheckAi]=useState(false);
   const dispatch=useDispatch();
+
+  useEffect(()=>{
+    let result=rooms.find((el)=>el.roomType==='ai');
+    if(result!==undefined){
+      setCheckAi(true);
+    };
+  },[rooms])
+  // let result=rooms.find((el)=>el.roomType=='ai');
 
   function addRoomWithMembers(){
     const payload={
@@ -61,6 +73,18 @@ export default function AddRoomDialog({users}) {
     if (value !== null) setActiveTab(value);
   };
 
+  function AddAiChatRoom(){
+    const payload={
+      name:'Help',
+      roomType:'ai',
+      members:[user?.id],
+    };
+    dispatch(createNewRoomWithMembers(payload)).unwrap().then(()=>{
+      dispatch(closeDialog());
+    }).catch((err)=>dispatch(closeDialog()))
+
+  }
+
   function handleSingle(e){
     setSingleUser(e.target.value);
   }
@@ -68,9 +92,14 @@ export default function AddRoomDialog({users}) {
     <>
       <DialogTitle
         id="responsive-dialog-title"
-        className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3"
+        className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 flex justify-between items-center" title='Add Ai Chat'
       >
-        Start New Conversations
+        <p>Start New Conversations</p>
+        {!checkAi && (
+          <AiFillWechat className='text-3xl text-blue-400 cursor-pointer' onClick={AddAiChatRoom}/>
+        )}
+
+
       </DialogTitle>
 
       <div className="px-6 pt-4">

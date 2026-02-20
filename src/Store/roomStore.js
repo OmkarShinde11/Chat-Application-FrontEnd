@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { addMembersInRoom, createNewRoom, getChatsByRoom, getRoomByUsers, getRoomMembersByRoom } from "../Service/roomService";
+import { addMembersInRoom, createNewRoom, deleteMessageForEveryone, deleteMessageForMe, getChatsByRoom, getRoomByUsers, getRoomMembersByRoom, restoreDelEveryMsg, restoreDelMsgMeApi, uploadUserFile } from "../Service/roomService";
 
 const initialState={
     rooms:[],
@@ -58,6 +58,47 @@ export const createNewRoomWithMembers=createAsyncThunk('room/createNewRoomWithMe
     }
 })
 
+export const handleUpload=createAsyncThunk('room/handleUpload',async function(payload){
+    try{
+        const data=await uploadUserFile(payload);
+        return data;
+    }catch(err){
+        throw(err);
+    }
+})
+
+export const deleteMessageToEveryOne=createAsyncThunk('room/deleteMessageToEveryOne',async function(payload){
+    try{
+        const data=await deleteMessageForEveryone(payload);
+    }catch(err){
+        throw(err);
+    }
+})
+
+export const deleteMessageToMe=createAsyncThunk('room/deleteMessageToMe',async function(payload){
+    try{
+        const data=await deleteMessageForMe(payload);
+    }catch(err){
+        throw(err);
+    }
+})
+
+export const restoreEveryOneDelMsg=createAsyncThunk('room/restoreEveryOneDelMsg',async function (payload){
+    try{
+        const data=await restoreDelEveryMsg(payload);
+    }catch(err){
+        throw(err);
+    }
+})
+
+export const restoreDelMeMsg=createAsyncThunk('room/restoreDelMeMsg',async function(payload){
+    try{
+        const data=await restoreDelMsgMeApi(payload);
+    }catch(err){
+        throw(err);
+    }
+})
+
 const roomSlice=createSlice({
     name:'room',
     initialState,
@@ -74,6 +115,23 @@ const roomSlice=createSlice({
         resetSelectedMessage(state,action){
             state.selectedMessage=null;
         },
+        updateReaction(state,action){
+            let index=state.selectedRoomChats.findIndex(el=>el.id===action.payload.chatId);
+            state.selectedRoomChats[index].reaction=action.payload.reaction;
+        },
+        updatedeletedMessages(state,action){
+            let index=state.selectedRoomChats.findIndex(el=>el.id===action.payload.chat_id);
+            state.selectedRoomChats[index]=action.payload.newChat;
+        },
+        updatedeletedMessagesToMe(state,action){
+            let index=state.selectedRoomChats.findIndex(el=>el.id===action.payload);
+            state.selectedRoomChats.splice(index,1);
+        },
+        restoreMeMsg(state,action){
+            state.selectedRoomChats.push(action.payload[0]);
+            state.selectedRoomChats.sort((a,b)=>new Date(a.created_at) - new Date(b.created_at));
+        }
+        
     },
     extraReducers:(builder)=>{
         builder
@@ -96,9 +154,26 @@ const roomSlice=createSlice({
         .addCase(createNewRoomWithMembers.pending,(state,action)=>{state.loadingRooms=true;})
         .addCase(createNewRoomWithMembers.fulfilled,(state,action)=>{state.loadingRooms=false;state.selectedRoom=action.payload;state.rooms=[...state.rooms,action.payload]})
         .addCase(createNewRoomWithMembers.rejected,(state,action)=>{state.loadingRooms=false;state.selectedRoom=null; state.error=action.payload;})
+
+        .addCase(handleUpload.pending,(state,action)=>{state.loadingChats=true;})
+        .addCase(handleUpload.fulfilled,(state,action)=>{state.loadingChats=false;})
+        .addCase(handleUpload.rejected,(state,action)=>{state.loadingChats=false; state.error=action.payload})
+
+        .addCase(deleteMessageToEveryOne.pending,(state,action)=>{state.loadingChats=true})
+        .addCase(deleteMessageToEveryOne.fulfilled,(state,action)=>{state.loadingChats=false})
+        .addCase(deleteMessageToEveryOne.rejected,(state,action)=>{state.loadingChats=false,state.error=action.payload})
+
+        .addCase(restoreEveryOneDelMsg.pending,(state,action)=>{state.loadingChats=true})
+        .addCase(restoreEveryOneDelMsg.fulfilled,(state,action)=>{state.loadingChats=false})
+        .addCase(restoreEveryOneDelMsg.rejected,(state,action)=>{state.loadingChats=false,state.error=action.payload})
+
+        .addCase(restoreDelMeMsg.pending,(state,action)=>{state.loadingChats=true})
+        .addCase(restoreDelMeMsg.fulfilled,(state,action)=>{state.loadingChats=false})
+        .addCase(restoreDelMeMsg.rejected,(state,action)=>{state.loadingChats=false,state.error=action.payload})
+
     }
 })
 
-export const {addNewMessage,changeSelectedRoom,setMessage,resetSelectedMessage}=roomSlice.actions;
+export const {addNewMessage,changeSelectedRoom,setMessage,resetSelectedMessage,updateReaction,updatedeletedMessages,updatedeletedMessagesToMe,restoreMeMsg}=roomSlice.actions;
 
 export default roomSlice.reducer;

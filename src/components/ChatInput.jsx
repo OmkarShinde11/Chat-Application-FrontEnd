@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import io from 'socket.io-client';
 
@@ -7,7 +7,8 @@ import Button from './commomComponents/Button';
 import EmojiPicker from 'emoji-picker-react';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import { IconButton } from '@mui/material';
-import { resetSelectedMessage } from '../Store/roomStore';
+import { handleUpload, resetSelectedMessage } from '../Store/roomStore';
+import { IoCloudUpload } from "react-icons/io5";
 
 
 export default function ChatInput() {
@@ -17,7 +18,10 @@ export default function ChatInput() {
     const {user}=useSelector((state)=>state.auth);
     const [showEmoji, setShowEmoji] = useState(false);
     const [mode,setMode]=useState('');
+    const [inputFile,setInputFile]=useState('');
     const dispatch=useDispatch();
+
+    const fileInputRef=useRef(null);  
 
     useEffect(()=>{
       if(selectedMessage){
@@ -53,12 +57,27 @@ export default function ChatInput() {
 
     function handleEmojiClick(emojiData){
       setInput((prev) => prev + emojiData.emoji);
+      console.log(input);
       setShowEmoji(false);
     }
 
     function closeReply(){
       setMode('');
       dispatch(resetSelectedMessage());
+    }
+
+    function handleChange(e){
+      console.log(e?.target?.files);
+      setInputFile(e?.target?.files);
+      const formData=new FormData();
+      formData.append('file',e?.target?.files[0]);
+      formData.append('room_id',selectedRoom?.id);
+      formData.append('user_id',user?.id);
+      dispatch(handleUpload(formData));
+    }
+
+    function handleFileClick(){
+      fileInputRef.current.click();
     }
   return (
     <div className="relative flex items-center gap-2">
@@ -91,10 +110,14 @@ export default function ChatInput() {
         <input
         className="w-[90%] border rounded px-3 py-2"
         placeholder="Type a message…"
-        value={input}
         onChange={(e)=>setInput(e.target.value)}
         onKeyDown={(e)=>keyPress(e)}
       />
+      <div>
+        <input type='file' ref={fileInputRef} style={{ display: "none" }}
+        onChange={handleChange}/> 
+      <IoCloudUpload title='Upload' className='text-2xl text-blue-500 cursor-pointer' onClick={handleFileClick}/>
+      </div>
       {/* <button onClick={sendMessage} className='w-[10%] border border-blue-500 text-white rounded px-3 py-2 bg-blue-500'>Send</button> */}
       <Button onClick={sendMessage}>Send</Button>
     </div>

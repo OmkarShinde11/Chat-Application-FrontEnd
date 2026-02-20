@@ -1,15 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {Dialog,DialogTitle,DialogContent,Tabs,Tab,Avatar,List,ListItem,ListItemAvatar,ListItemText, DialogActions} from '@mui/material';
 import { closeDialog } from '../../Store/dialogStore';
 import Button from '../commomComponents/Button';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { MdDelete } from "react-icons/md";
+import { IoMdAddCircleOutline } from "react-icons/io";
+import EmojiPicker from 'emoji-picker-react';
 
-export default function ReactionDialog({chats}) {
+
+
+export default function ReactionDialog({chats,onSubmit}) {
     const dispatch=useDispatch();
+    const [openReaction,setOpenReaction]=useState(false);
+    const {user}=useSelector((state)=>state.auth);
+    const {selectedRoom}=useSelector((state)=>state.room);
+
+    function deleteReaction(data,reaction){
+      if (typeof onSubmit !== "function") return;
+      console.log(data,reaction);
+      const payload={
+        emoji:reaction?.emoji,
+        userId:user?.id,
+        chatId:data?.id,
+        roomId:selectedRoom?.id
+      };
+      console.log(payload);
+      onSubmit(payload);
+    }
   return (
     <>
+    <div className='flex justify-between items-center'>
         <DialogTitle>Reactions</DialogTitle>
+        <IoMdAddCircleOutline title='Add Reaction' className='text-2xl text-blue-500 cursor-pointer' onClick={()=>setOpenReaction((reaction)=>!reaction)} />
+    </div>
         <DialogContent dividers>
+          {
+            openReaction && (
+              <div className="absolute  left-[160px] z-50">
+                <EmojiPicker height={350} width={300}/>
+              </div>
+            )
+          }
     {chats &&
       chats?.reaction.map((group) => (
         <div key={group?.emoji} className="mb-4">
@@ -24,6 +55,11 @@ export default function ReactionDialog({chats}) {
                   <Avatar>{u?.name[0]}</Avatar>
                 </ListItemAvatar>
                 <ListItemText primary={u?.name} />
+                {
+                  user?.id == u?.id && (
+                    <MdDelete title='remove Action' className='cursor-pointer text-2xl text-red-500' onClick={()=>deleteReaction(chats,group)} />
+                  )
+                }
               </ListItem>
             ))}
           </List>

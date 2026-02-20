@@ -95,3 +95,58 @@ export const createNewRoom=async (payload)=>{
         return err;
     }
 }
+
+export const uploadUserFile=async (payload)=>{
+    try{
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'http://localhost:5000/api/v1/chat/uploadFile',
+            headers: { 
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzcwOTY1OTYyLCJleHAiOjE3NzM1NTc5NjJ9.30U_AOVmk6lvdJareicJVoJh9EmmtHn_aNrLg-r4QR8', 
+            },
+            data : payload
+          };
+          const {data}=await axios.request(config);
+        // const {data}=await axiosInstance.post('chat/uploadFile',payload);
+        return data?.chat
+    }catch(err){
+        return err;
+    }
+}
+
+ export const deleteMessageForEveryone=(payload)=>{
+    try{
+        const {data}=axiosInstance.patch('/chat/deleteMessageToEveryOne',payload);
+        return data;
+    }catch(err){
+        return err;
+    }
+}
+
+export const deleteMessageForMe=(payload)=>{
+    try{
+        const {data}=axiosInstance.post('/chat/deleteMessageToMe',payload);
+        return data;
+    }catch(err){
+        return err;
+    }
+}
+
+export const restoreDelEveryMsg=(payload)=>{
+    try{
+        const {data}=axiosInstance.patch('/chat/restoreDelEveryOneMsg',payload);
+        return data;
+    }catch(err){
+        return err;
+    }
+}
+
+export const restoreDelMsgMeApi=(payload)=>{
+    try{
+        const {data}=axiosInstance.post('/chat/restoreDelMeMsg',payload);
+        return data;
+    }catch(err){
+        return err;
+    }
+}
