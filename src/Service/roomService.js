@@ -36,7 +36,7 @@ export const getRoomMembersByRoom=async (roomId)=>{
     }
 };
 
-export const getChatsByRoom=async (roomId)=>{
+export const getChatsByRoom=async (roomId,page_no,page_size)=>{
     try{
         // let config = {
         //     method: 'get',
@@ -48,7 +48,7 @@ export const getChatsByRoom=async (roomId)=>{
         // };
     
         // const chats=await axios.request(config);
-        const {data}=await axiosInstance.get(`chat/getChat/${roomId}`);
+        const {data}=await axiosInstance.get(`chat/getChat/${roomId}?page_no=${page_no}&page_size=${page_size}`);
         return data?.chats;
     }catch(err){
         throw(err);

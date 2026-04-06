@@ -7,6 +7,8 @@ const initialState={
     selectedRoomMembers:[],
     selectedRoomChats:[],
     selectedMessage:null,
+    selectedRoomPage:1,
+    hasMore:false,
     loadingRooms: false,
     loadingMembers: false,
     loadingChats: false,
@@ -31,12 +33,18 @@ export const fetchRoomMembers=createAsyncThunk('room/getRoomMembers',async funct
     }
 });
 
-export const fetchChatsByRoom=createAsyncThunk('room/getChatsByRoom',async function(roomId){
+export const fetchChatsByRoom=createAsyncThunk('room/getChatsByRoom',async function({roomId,page_number=1,page_size=10},thunkAPI){
     try{
-        const data=await getChatsByRoom(roomId);
+        const { dispatch } = thunkAPI;
+        dispatch(setPage(page_number));
+        const data=await getChatsByRoom(roomId,page_number,page_size);
+        if(data && data.length ===0){
+            dispatch(setBoundry(true));
+            return rejectWithValue('No more chats');
+        }
         return data;
     }catch(err){
-        return err;
+        return thunkAPI.rejectWithValue(err);
     }
 });
 
@@ -130,6 +138,16 @@ const roomSlice=createSlice({
         restoreMeMsg(state,action){
             state.selectedRoomChats.push(action.payload[0]);
             state.selectedRoomChats.sort((a,b)=>new Date(a.created_at) - new Date(b.created_at));
+        },
+        setPage(state,action){
+            state.selectedRoomPage=action.payload;
+        },
+        setBoundry(state,action){
+            state.hasMore=action.payload;
+        },
+        reset(state,action){
+            state.selectedRoomPage=1;
+            state.hasMore=false;
         }
         
     },
@@ -144,8 +162,22 @@ const roomSlice=createSlice({
         .addCase(fetchRoomMembers.rejected,(state,action)=>{state.loadingMembers=false;state.selectedRoomMembers=[];state.error=action.payload;})
 
         .addCase(fetchChatsByRoom.pending,(state,action)=>{state.loadingChats=true;})
-        .addCase(fetchChatsByRoom.fulfilled,(state,action)=>{state.loadingChats=false;state.selectedRoomChats=action.payload;})
-        .addCase(fetchChatsByRoom.rejected,(state,action)=>{state.loadingChats=false;state.selectedRoomChats=[];state.error=action.payload;})
+        .addCase(fetchChatsByRoom.fulfilled,(state,action)=>{
+            state.loadingChats=false;
+            const newChats=action.payload.slice().reverse();
+            if(action.meta.arg.page_number==1 || action.meta.arg.page_number===undefined)state.selectedRoomChats=newChats;
+            else{
+                state.selectedRoomChats=[
+                    ...newChats,
+                    ...state.selectedRoomChats,
+                ]
+            }
+        })
+        .addCase(fetchChatsByRoom.rejected,(state,action)=>{
+            if(action.payload==='No more chats') return;
+            state.loadingChats=false;
+            state.error=action.payload;
+        })
 
         .addCase(addRoomMember.pending,(state,action)=>{state.loadingMembers=true;})
         .addCase(addRoomMember.fulfilled,(state,action)=>{state.loadingMembers=false;})
@@ -174,6 +206,6 @@ const roomSlice=createSlice({
     }
 })
 
-export const {addNewMessage,changeSelectedRoom,setMessage,resetSelectedMessage,updateReaction,updatedeletedMessages,updatedeletedMessagesToMe,restoreMeMsg}=roomSlice.actions;
+export const {addNewMessage,changeSelectedRoom,setMessage,resetSelectedMessage,updateReaction,updatedeletedMessages,updatedeletedMessagesToMe,restoreMeMsg,setPage,setBoundry,reset}=roomSlice.actions;
 
 export default roomSlice.reducer;

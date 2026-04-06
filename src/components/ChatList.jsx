@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Loader from './Loader';
-import { changeSelectedRoom } from '../Store/roomStore';
+import { changeSelectedRoom, reset } from '../Store/roomStore';
 import { IoIosAdd } from "react-icons/io";
 import { openDialog } from '../Store/dialogStore';
 import AddRoomDialog from './Dialogs/AddRoomDialog';
@@ -13,7 +13,8 @@ export default function ChatList() {
     const {user,allUsers}=useSelector((state)=>state.auth);
     const dispatch=useDispatch();
     function changeRoom(room){
-        dispatch(changeSelectedRoom(room));
+      dispatch(reset());
+      dispatch(changeSelectedRoom(room));
     }
     function openRoomChat(){
       dispatch(openDialog({
